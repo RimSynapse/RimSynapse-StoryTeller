@@ -6,7 +6,7 @@ namespace RimSynapse
 {
     public class RimSynapseStoryTellerMod : Mod
     {
-        public static string Id = "archDukeJim.rimsynapseStoryTeller";
+        public static string Id = "RimSynapse.StoryTeller";
 
         public RimSynapseStoryTellerMod(ModContentPack content) : base(content)
         {
