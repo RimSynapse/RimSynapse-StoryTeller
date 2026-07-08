@@ -1,0 +1,15 @@
+<Project>
+  <!-- 
+    Local Developer Path Overrides
+    
+    This file defines the paths to RimWorld and Harmony for local compilation.
+    By keeping this in a separate .props file, different developers can override
+    these paths without changing the main .csproj file (which should be tracked in git).
+    
+    If your RimWorld installation is located elsewhere, update $(RimWorldPath) below.
+  -->
+  <PropertyGroup>
+    <RimWorldPath>C:\Program Files (x86)\Steam\steamapps\common\RimWorld</RimWorldPath>
+    <HarmonyPath>C:\Program Files (x86)\Steam\steamapps\workshop\content\294100\2009463077\1.5\Assemblies</HarmonyPath>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,6 @@
+D:\github\RimSynapse-StoryTeller\Assemblies\RimSynapseStoryTeller.dll
+D:\github\RimSynapse-StoryTeller\Source\obj\Debug\RimSynapseStoryTeller.csproj.AssemblyReference.cache
+D:\github\RimSynapse-StoryTeller\Source\obj\Debug\RimSynapseStoryTeller.GeneratedMSBuildEditorConfig.editorconfig
+D:\github\RimSynapse-StoryTeller\Source\obj\Debug\RimSynapseStoryTeller.csproj.CoreCompileInputs.cache
+D:\github\RimSynapse-StoryTeller\Source\obj\Debug\RimSynap.92BF5648.Up2Date
+D:\github\RimSynapse-StoryTeller\Source\obj\Debug\RimSynapseStoryTeller.dll
