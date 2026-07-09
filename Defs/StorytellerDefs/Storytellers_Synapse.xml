@@ -2,8 +2,8 @@
 <Defs>
   <StorytellerDef ParentName="BaseStoryteller">
     <defName>Synapse</defName>
-    <label>Synapse</label>
-    <description>Synapse actively monitors the narrative threads of your colony. She doesn't just throw random events at you; she watches your choices, evaluates the psychological state of your pawns, and crafts bespoke scenarios and quests to test your morals and sanity. Her threat scaling uses traditional colony wealth as a baseline logical cost-benefit analysis, but the frequency and type of threats are dynamically orchestrated.</description>
+    <label>Aura Algorithm</label>
+    <description>Aura Algorithm actively monitors the narrative threads of your colony. She doesn't just throw random events at you; she watches your choices, evaluates the psychological state of your pawns, and crafts bespoke scenarios and quests to test your morals and sanity. Her threat scaling uses traditional colony wealth as a baseline logical cost-benefit analysis, but the frequency and type of threats are dynamically orchestrated.\n\nNOTE: Aura requires an active LLM connection to orchestrate her narrative intelligence. If the LLM becomes disconnected or unresponsive, her storytelling logic will automatically fall back to Classic Cassandra.</description>
     <portraitLarge>UI/HeroArt/Storytellers/Synapse</portraitLarge>
     <portraitTiny>UI/HeroArt/Storytellers/SynapseTiny</portraitTiny>
     <listOrder>45</listOrder>
