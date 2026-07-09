@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <MainButtonDef>
+    <defName>SynapsePerceptions</defName>
+    <label>Perceptions</label>
+    <description>View how the various factions of the Rim perceive your colony's wealth and strength.</description>
+    <tabWindowClass>RimSynapse.StoryTeller.UI.MainTabWindow_SynapsePerceptions</tabWindowClass>
+    <order>95</order>
+    <validWithoutMap>true</validWithoutMap>
+  </MainButtonDef>
+</Defs>

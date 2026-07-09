@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using RimWorld;
 using RimWorld.Planet;
 using Verse;
 using RimSynapse.Models;
@@ -7,15 +8,10 @@ namespace RimSynapse
 {
     public class SynapseStoryTellerWorldComponent : WorldComponent
     {
-        public List<NarrativeThread> narrativeThreads = new List<NarrativeThread>();
-        public List<FactionRelationshipTracker> factionTrackers = new List<FactionRelationshipTracker>();
-        
-        // Use a List for Scribe serialization since Queue is not natively supported by Scribe_Collections
-        public List<PastEvent> backlogQueueList = new List<PastEvent>();
-        private Queue<PastEvent> _backlogQueue = new Queue<PastEvent>();
-
-        // Interaction history stub for future LLM conversation records
-        // public List<InteractionRecord> interactionHistory = new List<InteractionRecord>();
+        public Dictionary<string, float> categoryMultipliers = new Dictionary<string, float>();
+        public Dictionary<string, float> incidentMultipliers = new Dictionary<string, float>();
+        public float GlobalPacingMultiplier = 1.0f;
+        public float TensionModifier = 1.0f;
         
         public SynapseStoryTellerWorldComponent(World world) : base(world)
         {
@@ -25,48 +21,89 @@ namespace RimSynapse
         {
             base.ExposeData();
             
-            Scribe_Collections.Look(ref narrativeThreads, "narrativeThreads", LookMode.Deep);
-            Scribe_Collections.Look(ref factionTrackers, "factionTrackers", LookMode.Deep);
-            Scribe_Collections.Look(ref backlogQueueList, "backlogQueueList", LookMode.Deep);
-
-            // Scribe doesn't support Queue natively, so we sync with a List
-            if (Scribe.mode == LoadSaveMode.Saving)
-            {
-                backlogQueueList.Clear();
-                backlogQueueList.AddRange(_backlogQueue);
-            }
+            Scribe_Collections.Look(ref categoryMultipliers, "categoryMultipliers", LookMode.Value, LookMode.Value);
+            Scribe_Collections.Look(ref incidentMultipliers, "incidentMultipliers", LookMode.Value, LookMode.Value);
+            Scribe_Values.Look(ref GlobalPacingMultiplier, "globalPacingMultiplier", 1.0f);
+            Scribe_Values.Look(ref TensionModifier, "tensionModifier", 1.0f);
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
-                if (narrativeThreads == null) narrativeThreads = new List<NarrativeThread>();
-                if (factionTrackers == null) factionTrackers = new List<FactionRelationshipTracker>();
-                if (backlogQueueList == null) backlogQueueList = new List<PastEvent>();
+                if (categoryMultipliers == null) categoryMultipliers = new Dictionary<string, float>();
+                if (incidentMultipliers == null) incidentMultipliers = new Dictionary<string, float>();
+            }
+        }
+
+        public float GetCategoryMultiplier(string categoryDefName)
+        {
+            if (categoryMultipliers.TryGetValue(categoryDefName, out float mult))
+            {
+                return mult;
+            }
+            return 1.0f;
+        }
+
+        public float GetIncidentMultiplier(string incidentDefName)
+        {
+            if (incidentMultipliers.TryGetValue(incidentDefName, out float mult))
+            {
+                return mult;
+            }
+            return 1.0f;
+        }
+
+        public float CalculateDynamicThreatPoints(IIncidentTarget target, float vanillaPoints)
+        {
+            Map map = target as Map;
+            if (map == null) return vanillaPoints * TensionModifier;
+
+            float combatCompetence = 0f;
+            int freeColonists = 0;
+
+            foreach (Pawn pawn in map.mapPawns.FreeColonistsSpawned)
+            {
+                if (pawn.Downed || pawn.Dead) continue;
                 
-                _backlogQueue.Clear();
-                foreach (var pastEvent in backlogQueueList)
+                freeColonists++;
+                
+                // Add points for combat skills
+                combatCompetence += (pawn.skills?.GetSkill(RimWorld.SkillDefOf.Shooting)?.Level ?? 0) * 5f;
+                combatCompetence += (pawn.skills?.GetSkill(RimWorld.SkillDefOf.Melee)?.Level ?? 0) * 5f;
+
+                // Add points for equipped weapons
+                if (pawn.equipment?.Primary != null)
                 {
-                    _backlogQueue.Enqueue(pastEvent);
+                    // A simple heuristic: ranged weapons give more threat points, higher market value weapons mean better tech
+                    combatCompetence += pawn.equipment.Primary.MarketValue / 10f;
+                }
+                
+                // Add points for apparel (armor)
+                if (pawn.apparel != null)
+                {
+                    foreach (var app in pawn.apparel.WornApparel)
+                    {
+                        combatCompetence += app.MarketValue / 20f;
+                    }
                 }
             }
-        }
 
-        public void EnqueuePastEvent(PastEvent pastEvent)
-        {
-            _backlogQueue.Enqueue(pastEvent);
-        }
-
-        public bool TryDequeuePastEvent(out PastEvent pastEvent)
-        {
-            if (_backlogQueue.Count > 0)
+            // Also factor in installed security structures (turrets)
+            float securityPower = 0f;
+            foreach (Thing t in map.listerThings.ThingsInGroup(ThingRequestGroup.BuildingArtificial))
             {
-                pastEvent = _backlogQueue.Dequeue();
-                return true;
+                if (t.def.building != null && t.def.building.IsTurret)
+                {
+                    securityPower += t.MarketValue / 5f;
+                }
             }
-            
-            pastEvent = null;
-            return false;
-        }
 
-        public int BacklogCount => _backlogQueue.Count;
+            // The final threat point calculation completely ignores statues, floors, and raw silver.
+            // It relies exclusively on the colony's actual combat capacity and the LLM's Tension factor.
+            // We scale it slightly to match RimWorld's general point distribution (base 35 points per colonist roughly).
+            float baseColonistPoints = freeColonists * 35f;
+            float actualThreat = (baseColonistPoints + combatCompetence + securityPower) * TensionModifier;
+
+            // Ensure it doesn't drop to 0 or go to extreme integer overflows
+            return UnityEngine.Mathf.Clamp(actualThreat, 35f, 10000f);
+        }
     }
 }
