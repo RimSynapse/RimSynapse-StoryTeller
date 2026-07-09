@@ -28,9 +28,8 @@ namespace RimSynapse.StoryTeller
                 if (currentTick - lastTick < 60000) return;
             }
 
-            var coreComp = Find.World.GetComponent<SynapseCoreWorldComponent>();
             var stComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
-            if (stComp != null && coreComp != null)
+            if (stComp != null)
             {
                 float actualWealth = __instance.Map.wealthWatcher.WealthTotal;
                 
@@ -40,7 +39,7 @@ namespace RimSynapse.StoryTeller
                 float actualStrength = stComp.CalculateDynamicThreatPoints(__instance.Map, 500f);
                 stComp.TensionModifier = oldTension;
 
-                coreComp.BroadcastKnowledge(__instance.Faction, actualWealth, actualStrength);
+                stComp.BroadcastKnowledge(__instance.Faction, actualWealth, actualStrength);
                 _lastBroadcastTick[__instance.Faction] = currentTick;
             }
         }

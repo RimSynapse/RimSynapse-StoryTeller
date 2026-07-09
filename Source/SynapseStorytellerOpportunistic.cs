@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Verse;
 using RimWorld;
+using RimSynapse.Utils;
 using Newtonsoft.Json;
 
 namespace RimSynapse.StoryTeller
@@ -13,6 +14,9 @@ namespace RimSynapse.StoryTeller
         {
             if (Current.ProgramState != ProgramState.Playing || Find.CurrentMap == null) return false;
             if (Find.Storyteller?.def?.defName != "Synapse") return false;
+
+            // Ensure all faction leaders have backstories and baselines
+            SynapseFactionEvaluator.CheckAllFactions();
 
             var map = Find.CurrentMap;
             
@@ -68,13 +72,8 @@ Analyze the situation and decide on your action.";
                     {
                         try
                         {
-                            string json = result.content.Trim();
-                            int startIndex = json.IndexOf("{");
-                            int endIndex = json.LastIndexOf("}");
-                            if (startIndex >= 0 && endIndex >= startIndex)
-                            {
-                                json = json.Substring(startIndex, endIndex - startIndex + 1);
-                            }
+                            string json = JsonHelper.ExtractJson(result.content);
+                            if (json == null) { Log.Warning("[RimSynapse-StoryTeller] No JSON found in investigation response."); return; }
 
                             var parsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
                             if (parsed != null && parsed.TryGetValue("ActionType", out string actionType))
