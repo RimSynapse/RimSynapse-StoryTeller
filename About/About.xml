@@ -27,14 +27,16 @@
 [h1]RimSynapse - StoryTeller[/h1]
 [b]An AI-Driven Storyteller That Learns Your Colony's Story.[/b]
 
-Synapse is not just a difficulty slider — she is a narrative intelligence engine. She observes your colony, rewrites quest flavor text to match your story, and decides when factions attack based on what they actually know about you — not omniscient wealth calculations.
+Aura Algorithm is not just a difficulty slider — she is a narrative intelligence engine. She observes your colony, rewrites quest flavor text to match your story, and decides when factions attack based on what they actually know about you — not omniscient wealth calculations.
+
+[b]NOTE: Aura requires an active LLM connection to orchestrate her narrative intelligence. If the LLM becomes disconnected or unresponsive, her storytelling logic will automatically fall back to Classic Cassandra.[/b]
 
 [h2]Core Systems[/h2]
 [list]
-[*] [b]Dynamic Pacing Engine:[/b] The LLM continuously adjusts a global pacing multiplier that controls how frequently events fire. If your colony is recovering from a devastating raid, Synapse will dial back the pressure. If things have been too quiet, she ramps it up.
+[*] [b]Dynamic Pacing Engine:[/b] The LLM continuously adjusts a global pacing multiplier that controls how frequently events fire. If your colony is recovering from a devastating raid, Aura will dial back the pressure. If things have been too quiet, she ramps it up.
 [*] [b]LLM-Weighted Incident Selection:[/b] Each incident category (ThreatBig, Misc, Disease, etc.) has a base weight that the LLM modifies in real-time. If you keep rescuing beggars, the AI boosts charity quest weights. If you're hoarding wealth, raid weights climb.
-[*] [b]Combat-Competency Threat Model:[/b] Vanilla RimWorld calculates raid size based on total colony wealth. Synapse replaces this with a combat-competency model — raid strength is determined by your colonists' actual combat skills, weapon quality, and defenses. A colony rich in gold statues won't attract the same raid as one armed to the teeth.
-[*] [b]Quest Flavor Rewriting:[/b] When a new quest spawns, Synapse intercepts it and rewrites the title and description via LLM to fit your current narrative arc, while preserving all gameplay mechanics (rewards, threats, timers).
+[*] [b]Combat-Competency Threat Model:[/b] Vanilla RimWorld calculates raid size based on total colony wealth. Aura replaces this with a combat-competency model — raid strength is determined by your colonists' actual combat skills, weapon quality, and defenses. A colony rich in gold statues won't attract the same raid as one armed to the teeth.
+[*] [b]Quest Flavor Rewriting:[/b] When a new quest spawns, Aura intercepts it and rewrites the title and description via LLM to fit your current narrative arc, while preserving all gameplay mechanics (rewards, threats, timers).
 [/list]
 
 [h2]Faction Perception System[/h2]
