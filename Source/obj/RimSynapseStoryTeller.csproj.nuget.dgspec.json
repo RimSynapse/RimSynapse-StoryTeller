@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "d:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj": {}
+    "D:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj": {}
   },
   "projects": {
-    "d:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj": {
+    "D:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "d:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj",
+        "projectUniqueName": "D:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj",
         "projectName": "RimSynapseStoryTeller",
-        "projectPath": "d:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj",
+        "projectPath": "D:\\github\\RimSynapse-StoryTeller\\Source\\RimSynapseStoryTeller.csproj",
         "packagesPath": "C:\\Users\\sealt\\.nuget\\packages\\",
-        "outputPath": "d:\\github\\RimSynapse-StoryTeller\\Source\\obj\\",
+        "outputPath": "D:\\github\\RimSynapse-StoryTeller\\Source\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\sealt\\AppData\\Roaming\\NuGet\\NuGet.Config"
