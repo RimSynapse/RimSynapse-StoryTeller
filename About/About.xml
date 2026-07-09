@@ -4,6 +4,7 @@
     <author>RimSynapse Team</author>
     <packageId>RimSynapse.StoryTeller</packageId>
     <url>https://github.com/RimSynapse/RimSynapse-StoryTeller</url>
+    <modVersion>0.2.0</modVersion>
     <supportedVersions>
         <li>1.6</li>
     </supportedVersions>
