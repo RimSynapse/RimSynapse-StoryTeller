@@ -28,5 +28,7 @@ RimSynapse StoryTeller — The narrative intelligence layer for RimWorld.
 Acts as an AI director that analyzes colony events and creates overarching narrative threads. Uses RimSynapse Core to communicate with local LLMs, building dynamic story context and optionally providing AI advisor functionality.
 
 Requires: Harmony and RimSynapse Core
+
+☕ Buy me a coffee: https://buymeacoffee.com/archdukejim
     </description>
 </ModMetaData>
