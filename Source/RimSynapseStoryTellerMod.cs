@@ -44,7 +44,7 @@ namespace RimSynapse
                 {
                     Label = "Faction AI Generation",
                     Description = "The Aura Algorithm AI interprets faction data and leader backstories to generate historical flavor.",
-                    Priority = 3, 
+                    Priority = 6, // Above leader backstories — faction history provides context for leaders
                     Weight = 1.0f,
                     CooldownTicks = 10000 
                 });

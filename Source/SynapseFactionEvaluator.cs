@@ -14,6 +14,13 @@ namespace RimSynapse.StoryTeller
         /// <summary>
         /// Checks all factions for one that needs history generation.
         /// Returns true if an LLM call was actually queued.
+        /// 
+        /// Coordination logic:
+        /// - If Psychology is loaded, leader backstories are OPTIONAL bonus context.
+        ///   We don't gate on them — faction history generates first to provide context
+        ///   for leader backstories when Psychology processes them later.
+        /// - If Psychology is NOT loaded, we generate faction history using only
+        ///   faction type, ideology, and vanilla relationship data.
         /// </summary>
         public static bool CheckAllFactions()
         {
@@ -45,20 +52,12 @@ namespace RimSynapse.StoryTeller
                 return false;
             }
 
-            var leaderCoreComp = faction.leader.TryGetComp<RimSynapse.Comps.SynapseCorePawnComp>();
-            if (leaderCoreComp == null) return false;
-
-            bool hasBackstory = leaderCoreComp.memories.Any(m => m.memoryType == "Backstory");
-            if (!hasBackstory)
-            {
-                return false; // Wait for Psychology to do it opportunistically
-            }
-
-            CalculateFactionGoodwillBaseline(faction, faction.leader, leaderCoreComp, tracker);
+            // Build the prompt — leader backstory is optional bonus context
+            GenerateFactionHistory(faction, faction.leader, tracker);
             return true; // LLM call was queued
         }
 
-        private static void CalculateFactionGoodwillBaseline(Faction faction, Pawn leader, RimSynapse.Comps.SynapseCorePawnComp coreComp, FactionStoryTracker tracker)
+        private static void GenerateFactionHistory(Faction faction, Pawn leader, FactionStoryTracker tracker)
         {
             string factionName = faction.Name;
             string factionType = faction.def.LabelCap;
@@ -68,16 +67,26 @@ namespace RimSynapse.StoryTeller
                 ? string.Join(", ", leader.story.traits.allTraits.Select(t => t.LabelCap)) 
                 : "None";
 
-            var backstories = coreComp.memories.Where(m => m.memoryType == "Backstory").Select(m => m.summary);
-            string backstoryText = string.Join("\n", backstories);
-            if (string.IsNullOrEmpty(backstoryText)) backstoryText = "Unknown past.";
-
-            int vanillaBaseline = faction.NaturalGoodwill;
+            // Check if Psychology has generated a leader backstory (optional bonus context)
+            string leaderBackstorySection = "";
+            bool psychologyLoaded = SynapseCore.IsModLoaded("RimSynapsePsychology");
+            
+            var leaderCoreComp = leader.TryGetComp<RimSynapse.Comps.SynapseCorePawnComp>();
+            if (leaderCoreComp != null)
+            {
+                var backstories = leaderCoreComp.memories.Where(m => m.memoryType == "Backstory").Select(m => m.summary);
+                string backstoryText = string.Join("\n", backstories);
+                if (!string.IsNullOrEmpty(backstoryText))
+                {
+                    leaderBackstorySection = $"\nLeader Backstory (AI-generated): \"{backstoryText}\"";
+                }
+            }
 
             string systemPrompt = @"You are the RimWorld Diplomatic AI. 
-You must analyze the following faction and its leader to generate a historical record for this faction.
-You must write a 'Historical Record' (3-4 sentences) that describes the faction's history based on the leader's personality, their backstory, and the faction's ideology.
-CRITICAL INSTRUCTION: You will be provided with the faction's current numeric relationships with OTHER major NPC factions. You MUST use these existing numeric values to shape the narrative of the historical record. If they are deeply hostile to another faction, explain the historical reason why based on their leader's backstory. Do NOT generate new relationship numbers between NPC factions. Use the provided ones to write flavor text.
+You must analyze the following faction to generate a historical record.
+Write a 'Historical Record' (3-4 sentences) that describes the faction's history based on the leader's personality traits, the faction's type, and its ideology.
+CRITICAL INSTRUCTION: You will be provided with the faction's current numeric relationships with OTHER major NPC factions. You MUST use these existing numeric values to shape the narrative. If they are deeply hostile to another faction, explain the historical reason. Do NOT generate new relationship numbers. Use the provided ones to write flavor text." +
+(string.IsNullOrEmpty(leaderBackstorySection) ? "" : "\nIf a leader backstory is provided, weave it into the faction's history as additional context.") + @"
 
 You MUST respond strictly in valid JSON format:
 {
@@ -99,14 +108,13 @@ Type: {factionType}
 Ideology: {ideology}
 
 Leader: {leader.Name.ToStringFull}
-Leader Traits: {traits}
-Leader Backstory: ""{backstoryText}""
+Leader Traits: {traits}{leaderBackstorySection}
 
 {npcRelations}
 
 Generate their History.";
 
-            var options = new ChatOptions { priority = 9 };
+            var options = new ChatOptions { priority = 6 };
 
             SynapseClient.PromptAsync(
                 RimSynapseStoryTellerMod.ModHandle,
@@ -114,13 +122,13 @@ Generate their History.";
                 userMessage,
                 result =>
                 {
-                    HandleFactionGoodwillResult(faction, tracker, result);
+                    HandleFactionHistoryResult(faction, tracker, result);
                 },
                 options
             );
         }
 
-        private static void HandleFactionGoodwillResult(Faction faction, FactionStoryTracker tracker, ChatResult result)
+        private static void HandleFactionHistoryResult(Faction faction, FactionStoryTracker tracker, ChatResult result)
         {
             if (result.success)
             {
