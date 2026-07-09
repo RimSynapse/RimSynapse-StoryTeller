@@ -56,10 +56,16 @@ Rewrite this quest to fit the narrative.";
                         try
                         {
                             string json = result.content.Trim();
-                            if (json.StartsWith("```json")) json = json.Substring(7);
-                            if (json.StartsWith("```")) json = json.Substring(3);
-                            if (json.EndsWith("```")) json = json.Substring(0, json.Length - 3);
-                            json = json.Trim();
+                            int startIndex = json.IndexOf("{");
+                            int endIndex = json.LastIndexOf("}");
+                            if (startIndex >= 0 && endIndex >= startIndex)
+                            {
+                                json = json.Substring(startIndex, endIndex - startIndex + 1);
+                            }
+                            else
+                            {
+                                throw new Exception("No valid JSON object found in response.");
+                            }
 
                             var parsed = Newtonsoft.Json.JsonConvert.DeserializeObject<System.Collections.Generic.Dictionary<string, string>>(json);
                             if (parsed != null)

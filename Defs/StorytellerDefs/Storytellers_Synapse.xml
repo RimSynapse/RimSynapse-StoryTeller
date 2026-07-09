@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
-  <StorytellerDef>
+  <StorytellerDef ParentName="BaseStoryteller">
     <defName>Synapse</defName>
     <label>Synapse</label>
     <description>Synapse actively monitors the narrative threads of your colony. She doesn't just throw random events at you; she watches your choices, evaluates the psychological state of your pawns, and crafts bespoke scenarios and quests to test your morals and sanity. Her threat scaling uses traditional colony wealth as a baseline logical cost-benefit analysis, but the frequency and type of threats are dynamically orchestrated.</description>
