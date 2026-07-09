@@ -1,24 +1,16 @@
 using System;
-using System.Reflection;
 using HarmonyLib;
 using RimWorld;
 using Verse;
-using RimSynapse.Models;
 
 namespace RimSynapse.StoryTeller
 {
-    [StaticConstructorOnStartup]
-    public static class HarmonyPatches
-    {
-        static HarmonyPatches()
-        {
-            var harmony = new Harmony("RimSynapse.StoryTeller");
-            harmony.PatchAll(Assembly.GetExecutingAssembly());
-        }
-    }
-
+    /// <summary>
+    /// Intercepts quest letter delivery to rewrite quest titles and descriptions via LLM,
+    /// giving each quest a narrative flavor that fits your colony's current story.
+    /// </summary>
     [HarmonyPatch(typeof(QuestUtility), "SendLetterQuestAvailable")]
-    public static class QuestUtility_SendLetterQuestAvailable_Patch
+    public static class Patch_QuestUtility_SendLetterQuestAvailable
     {
         private static System.Collections.Generic.HashSet<Quest> _processedQuests = new System.Collections.Generic.HashSet<Quest>();
 
@@ -53,8 +45,6 @@ Vanilla Quest Description: {originalDesc}
 
 Rewrite this quest to fit the narrative.";
 
-            // Block the vanilla letter from sending immediately
-            // We will enqueue a high priority LLM request and send the letter when it returns.
             SynapseClient.PromptAsync(
                 RimSynapseStoryTellerMod.ModHandle,
                 systemPrompt,
@@ -87,79 +77,21 @@ Rewrite this quest to fit the narrative.";
                         catch (Exception ex)
                         {
                             Log.Warning($"[RimSynapse-StoryTeller] Failed to parse quest rewrite JSON: {ex.Message}");
-                            // Fallback to vanilla strings
                             quest.name = originalName;
                             quest.description = originalDesc;
                         }
                     }
 
-                    // Manually dispatch the letter on the main thread using the vanilla method
                     SynapseGameComponent.Enqueue(() =>
                     {
                         _processedQuests.Add(quest);
                         QuestUtility.SendLetterQuestAvailable(quest);
                     });
                 },
-                new ChatOptions { priority = 10 } // High priority for UI interactivity
+                new ChatOptions { priority = 10 }
             );
 
             return false; // Skip the vanilla letter send for now
-        }
-    }
-
-    [HarmonyPatch(typeof(StorytellerUtility), "DefaultThreatPointsNow")]
-    public static class StorytellerUtility_DefaultThreatPointsNow_Patch
-    {
-        public static void Postfix(IIncidentTarget target, ref float __result)
-        {
-            if (Find.Storyteller != null && Find.Storyteller.def != null && Find.Storyteller.def.defName == "Synapse")
-            {
-                var worldComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
-                if (worldComp != null)
-                {
-                    // Overwrite the wealth-based calculation with our Combat/Tension-based logic
-                    __result = worldComp.CalculateDynamicThreatPoints(target, __result);
-                }
-            }
-        }
-    }
-
-    [HarmonyPatch(typeof(Pawn), "ExitMap")]
-    public static class Pawn_ExitMap_Patch
-    {
-        private static System.Collections.Generic.Dictionary<Faction, int> _lastBroadcastTick = new System.Collections.Generic.Dictionary<Faction, int>();
-
-        public static void Prefix(Pawn __instance)
-        {
-            if (__instance.Faction == null || __instance.Faction.IsPlayer || __instance.Map == null || !__instance.Map.IsPlayerHome)
-            {
-                return;
-            }
-
-            int currentTick = Find.TickManager.TicksGame;
-            if (_lastBroadcastTick.TryGetValue(__instance.Faction, out int lastTick))
-            {
-                // Only broadcast once per day per faction (60000 ticks)
-                if (currentTick - lastTick < 60000) return;
-            }
-
-            var coreComp = Find.World.GetComponent<SynapseCoreWorldComponent>();
-            var stComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
-            if (stComp != null && coreComp != null)
-            {
-                // Calculate actual wealth and strength of the colony
-                float actualWealth = __instance.Map.wealthWatcher.WealthTotal;
-                
-                // For strength, use the dynamic points function we wrote earlier, but without the tension modifier
-                // Temporarily store tension, set to 1, calc, restore.
-                float oldTension = stComp.TensionModifier;
-                stComp.TensionModifier = 1.0f;
-                float actualStrength = stComp.CalculateDynamicThreatPoints(__instance.Map, 500f);
-                stComp.TensionModifier = oldTension;
-
-                coreComp.BroadcastKnowledge(__instance.Faction, actualWealth, actualStrength);
-                _lastBroadcastTick[__instance.Faction] = currentTick;
-            }
         }
     }
 }

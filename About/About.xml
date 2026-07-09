@@ -9,15 +9,65 @@
     </supportedVersions>
     <modDependencies>
         <li>
+            <packageId>brrainz.harmony</packageId>
+            <displayName>Harmony</displayName>
+            <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+        </li>
+        <li>
             <packageId>RimSynapse.Core</packageId>
             <displayName>RimSynapse - Core</displayName>
         </li>
     </modDependencies>
     <loadAfter>
+        <li>brrainz.harmony</li>
+        <li>Ludeon.RimWorld</li>
         <li>RimSynapse.Core</li>
     </loadAfter>
     <description>
 [h1]RimSynapse - StoryTeller[/h1]
-[b]Companion Mod for RimSynapse.[/b]
+[b]An AI-Driven Storyteller That Learns Your Colony's Story.[/b]
+
+Synapse is not just a difficulty slider — she is a narrative intelligence engine. She observes your colony, rewrites quest flavor text to match your story, and decides when factions attack based on what they actually know about you — not omniscient wealth calculations.
+
+[h2]Core Systems[/h2]
+[list]
+[*] [b]Dynamic Pacing Engine:[/b] The LLM continuously adjusts a global pacing multiplier that controls how frequently events fire. If your colony is recovering from a devastating raid, Synapse will dial back the pressure. If things have been too quiet, she ramps it up.
+[*] [b]LLM-Weighted Incident Selection:[/b] Each incident category (ThreatBig, Misc, Disease, etc.) has a base weight that the LLM modifies in real-time. If you keep rescuing beggars, the AI boosts charity quest weights. If you're hoarding wealth, raid weights climb.
+[*] [b]Combat-Competency Threat Model:[/b] Vanilla RimWorld calculates raid size based on total colony wealth. Synapse replaces this with a combat-competency model — raid strength is determined by your colonists' actual combat skills, weapon quality, and defenses. A colony rich in gold statues won't attract the same raid as one armed to the teeth.
+[*] [b]Quest Flavor Rewriting:[/b] When a new quest spawns, Synapse intercepts it and rewrites the title and description via LLM to fit your current narrative arc, while preserving all gameplay mechanics (rewards, threats, timers).
+[/list]
+
+[h2]Faction Perception System[/h2]
+[list]
+[*] [b]Subjective Knowledge:[/b] Factions no longer omnisciently know your wealth. Each hostile faction tracks a "Perceived Wealth" and "Perceived Strength" for your colony, updated only when their pawns visit or leave your map.
+[*] [b]Greed Ratio Raids:[/b] If a faction perceives you as wealthy but weak (high greed ratio), they become highly motivated to invade. This creates realistic escalation — early game you're not worth raiding; late game, you're a gold mine.
+[*] [b]Knowledge Propagation:[/b] When a trader or visitor leaves your map, they broadcast your colony's actual wealth and strength back to their faction. Allied factions share information more freely than hostile ones.
+[*] [b]Dynamic Arrival Modes:[/b] Industrial+ factions that are far away and highly motivated may drop-pod in rather than walk across the map.
+[/list]
+
+[h2]Perception Window[/h2]
+[list]
+[*] [b]Faction Perceptions Tab:[/b] A new in-game window shows you exactly what each faction thinks your colony's wealth and strength are. Use this to strategize — or to panic.
+[/list]
+
+[h2]Default Settings (internal, adjustable via XML)[/h2]
+[code]
+  Incidents Target Days:         1.5    (Base days between incidents before LLM pacing)
+  Global Pacing Multiplier:      1.0    (LLM-driven; &gt;1 = more frequent events, &lt;1 = fewer)
+  Tension Modifier:              1.0    (LLM-driven; scales raid strength for narrative peaks)
+  Greed Ratio Invasion Threshold: 3.0   (Perceived wealth/strength ratio that triggers raids)
+  Knowledge Broadcast Cooldown:  60000  (Ticks between faction knowledge updates, ~1 day)
+[/code]
+
+[h2]Requirements[/h2]
+[list]
+[*] [b]Harmony[/b]
+[*] [b]RimSynapse Core[/b] (Must be loaded before this mod)
+[*] A running local LLM backend via LM Studio or Ollama.
+[/list]
+
+[h2]Support the Project[/h2]
+If you enjoy narrative AI storytelling, consider buying me a coffee!
+[url=https://buymeacoffee.com/archdukejim]☕ Buy me a coffee[/url]
     </description>
 </ModMetaData>

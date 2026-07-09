@@ -6,7 +6,11 @@ using Verse;
 
 namespace RimSynapse.StoryTeller
 {
-    public class StorytellerComp_Synapse : StorytellerComp
+    /// <summary>
+    /// Main Synapse storyteller component. Handles the interval tick loop
+    /// that decides which events fire, factoring in LLM pacing and faction perceptions.
+    /// </summary>
+    public partial class StorytellerComp_Synapse : StorytellerComp
     {
         protected StorytellerCompProperties_Synapse Props => (StorytellerCompProperties_Synapse)props;
 
@@ -56,7 +60,6 @@ namespace RimSynapse.StoryTeller
                     {
                         IncidentParms parms = GenerateParms(category, target);
                         
-                        // Allow the LLM to selectively boost specific incidents within the category
                         IncidentDef incidentDef = ChooseIncidentByLLMWeights(category, parms, stComp);
                         
                         if (incidentDef != null && incidentDef.Worker.CanFireNow(parms))
@@ -66,84 +69,6 @@ namespace RimSynapse.StoryTeller
                     }
                 }
             }
-        }
-
-        private Faction GetMotivatedFaction(SynapseCoreWorldComponent coreComp)
-        {
-            if (coreComp == null) return null;
-
-            foreach (var tracker in coreComp.factionTrackers)
-            {
-                Faction faction = Find.FactionManager.AllFactions.FirstOrDefault(f => f.GetUniqueLoadID() == tracker.factionId);
-                if (faction != null && faction.HostileTo(Faction.OfPlayer))
-                {
-                    // If perceived wealth is vastly higher than perceived strength (e.g., 10x ratio based on points)
-                    // Note: Wealth is usually around 50k-500k, while Strength points are 500-10000. 
-                    // Let's normalize it roughly: 1 strength point ~ 50 wealth.
-                    float normalizedStrength = (tracker.perceivedStrength * 50f) + 1f;
-                    float greedRatio = tracker.perceivedWealth / normalizedStrength;
-
-                    // If greed ratio is > 3, they are very tempted. Roll a chance to invade.
-                    if (greedRatio > 3f && Rand.Chance(0.2f))
-                    {
-                        // Reset their perception slightly so they don't chain-raid infinitely
-                        // We assume the raid is a "scouting in force" which updates their knowledge
-                        tracker.perceivedStrength += 500f; 
-                        return faction;
-                    }
-                }
-            }
-            return null;
-        }
-
-        private IncidentCategoryDef ChooseCategory(IIncidentTarget target, SynapseStoryTellerWorldComponent worldComp)
-        {
-            var weights = new Dictionary<IncidentCategoryDef, float>();
-            
-            // Default weights
-            weights[IncidentCategoryDefOf.ThreatBig] = 2f;
-            weights[IncidentCategoryDefOf.ThreatSmall] = 1f;
-            weights[IncidentCategoryDefOf.DiseaseHuman] = 0.5f;
-            weights[IncidentCategoryDefOf.Misc] = 3f;
-            
-            var diseaseAnimal = DefDatabase<IncidentCategoryDef>.GetNamedSilentFail("DiseaseAnimal");
-            if (diseaseAnimal != null) weights[diseaseAnimal] = 0.2f;
-
-            var orbitalVisitor = DefDatabase<IncidentCategoryDef>.GetNamedSilentFail("OrbitalVisitor");
-            if (orbitalVisitor != null) weights[orbitalVisitor] = 1f;
-
-            var factionArrival = DefDatabase<IncidentCategoryDef>.GetNamedSilentFail("FactionArrival");
-            if (factionArrival != null) weights[factionArrival] = 1f;
-
-            // Apply LLM category modifiers
-            if (worldComp != null)
-            {
-                foreach (var category in weights.Keys.ToList())
-                {
-                    weights[category] *= worldComp.GetCategoryMultiplier(category.defName);
-                }
-            }
-
-            return weights.RandomElementByWeightWithFallback(kvp => kvp.Value, default).Key;
-        }
-
-        private IncidentDef ChooseIncidentByLLMWeights(IncidentCategoryDef category, IncidentParms parms, SynapseStoryTellerWorldComponent worldComp)
-        {
-            var validIncidents = DefDatabase<IncidentDef>.AllDefs
-                .Where(d => d.category == category && d.Worker.CanFireNow(parms))
-                .ToList();
-
-            if (validIncidents.Count == 0) return null;
-
-            return validIncidents.RandomElementByWeightWithFallback(d => 
-            {
-                float baseChance = d.Worker.BaseChanceThisGame;
-                if (worldComp != null)
-                {
-                    baseChance *= worldComp.GetIncidentMultiplier(d.defName);
-                }
-                return baseChance;
-            }, null);
         }
     }
 }
