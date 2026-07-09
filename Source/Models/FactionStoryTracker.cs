@@ -22,6 +22,8 @@ namespace RimSynapse.StoryTeller.Models
         public string customNaturalGoodwillReason;
         /// <summary>LLM-generated historical record for this faction.</summary>
         public string factionHistory;
+        /// <summary>Absolute tick when the faction history was generated.</summary>
+        public long historyGeneratedTick;
 
         public void ExposeData()
         {
@@ -39,6 +41,7 @@ namespace RimSynapse.StoryTeller.Models
             Scribe_Values.Look(ref customNaturalGoodwill, "customNaturalGoodwill", null);
             Scribe_Values.Look(ref customNaturalGoodwillReason, "customNaturalGoodwillReason", null);
             Scribe_Values.Look(ref factionHistory, "factionHistory", null);
+            Scribe_Values.Look(ref historyGeneratedTick, "historyGeneratedTick", 0L);
         }
     }
 }

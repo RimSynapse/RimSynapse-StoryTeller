@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Defs>
+  <!-- DISABLED: Perceptions tab not yet wired up. Re-enable when ready.
   <MainButtonDef>
     <defName>SynapsePerceptions</defName>
     <label>Perceptions</label>
@@ -8,4 +9,5 @@
     <order>95</order>
     <validWithoutMap>true</validWithoutMap>
   </MainButtonDef>
+  -->
 </Defs>
