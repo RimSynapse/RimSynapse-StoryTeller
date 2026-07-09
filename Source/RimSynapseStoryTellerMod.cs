@@ -93,6 +93,16 @@ namespace RimSynapse
             }
 
             listing.GapLine();
+            listing.Label("── Faction Backstories ──");
+            listing.Gap(4f);
+
+            if (listing.ButtonText("Regenerate All Faction Backstories"))
+            {
+                SynapseFactionEvaluator.ForceRegenerateAll();
+                Messages.Message("Faction backstories cleared. They will regenerate in the background.", MessageTypeDefOf.NeutralEvent, false);
+            }
+            listing.Gap(4f);
+
             listing.Label("── Faction Status ──");
             listing.Gap(4f);
 

@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Verse;
 using RimWorld;
+using RimWorld.Planet;
 using RimSynapse.Utils;
 using RimSynapse.StoryTeller.Models;
 using Newtonsoft.Json;
@@ -14,13 +16,6 @@ namespace RimSynapse.StoryTeller
         /// <summary>
         /// Checks all factions for one that needs history generation.
         /// Returns true if an LLM call was actually queued.
-        /// 
-        /// Coordination logic:
-        /// - If Psychology is loaded, leader backstories are OPTIONAL bonus context.
-        ///   We don't gate on them — faction history generates first to provide context
-        ///   for leader backstories when Psychology processes them later.
-        /// - If Psychology is NOT loaded, we generate faction history using only
-        ///   faction type, ideology, and vanilla relationship data.
         /// </summary>
         public static bool CheckAllFactions()
         {
@@ -34,12 +29,32 @@ namespace RimSynapse.StoryTeller
         }
 
         /// <summary>
+        /// Force-regenerates faction history for ALL factions. Clears existing history first.
+        /// Used by the debug UI.
+        /// </summary>
+        public static void ForceRegenerateAll()
+        {
+            if (Find.FactionManager == null) return;
+            var stWorldComp = Find.World?.GetComponent<SynapseStoryTellerWorldComponent>();
+            if (stWorldComp == null) return;
+
+            foreach (var faction in Find.FactionManager.AllFactions)
+            {
+                if (faction == null || faction.IsPlayer || faction.Hidden) continue;
+
+                var tracker = stWorldComp.GetOrCreateStoryTracker(faction.GetUniqueLoadID());
+                tracker.factionHistory = null; // Clear so it regenerates
+            }
+
+            Log.Message("[RimSynapse-StoryTeller] Cleared all faction histories. They will regenerate on next opportunistic tick.");
+        }
+
+        /// <summary>
         /// Returns true if an LLM call was queued for this faction.
         /// </summary>
         public static bool EvaluateFaction(Faction faction)
         {
             if (faction == null || faction.IsPlayer || faction.Hidden) return false;
-            if (faction.leader == null || !faction.leader.RaceProps.Humanlike) return false;
 
             var stWorldComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
             if (stWorldComp == null) return false;
@@ -48,71 +63,105 @@ namespace RimSynapse.StoryTeller
 
             if (!string.IsNullOrEmpty(tracker.factionHistory))
             {
-                // Already generated history
+                // Already generated history — skip
                 return false;
             }
 
-            // Build the prompt — leader backstory is optional bonus context
-            GenerateFactionHistory(faction, faction.leader, tracker);
+            GenerateFactionHistory(faction, tracker);
             return true; // LLM call was queued
         }
 
-        private static void GenerateFactionHistory(Faction faction, Pawn leader, FactionStoryTracker tracker)
+        private static void GenerateFactionHistory(Faction faction, FactionStoryTracker tracker)
         {
             string factionName = faction.Name;
             string factionType = faction.def.LabelCap;
-            string ideology = faction.ideos?.PrimaryIdeo?.name ?? "No specific ideology";
-            
-            string traits = leader.story?.traits?.allTraits != null 
-                ? string.Join(", ", leader.story.traits.allTraits.Select(t => t.LabelCap)) 
-                : "None";
+            string vanillaDescription = faction.def.description ?? "No vanilla description available.";
 
-            // Check if Psychology has generated a leader backstory (optional bonus context)
-            string leaderBackstorySection = "";
-            bool psychologyLoaded = SynapseCore.IsModLoaded("RimSynapsePsychology");
-            
-            var leaderCoreComp = leader.TryGetComp<RimSynapse.Comps.SynapseCorePawnComp>();
-            if (leaderCoreComp != null)
+            // Ideology
+            string ideology = "No specific ideology";
+            string precepts = "";
+            try
             {
-                var backstories = leaderCoreComp.memories.Where(m => m.memoryType == "Backstory").Select(m => m.summary);
-                string backstoryText = string.Join("\n", backstories);
-                if (!string.IsNullOrEmpty(backstoryText))
+                if (ModsConfig.IdeologyActive && faction.ideos?.PrimaryIdeo != null)
                 {
-                    leaderBackstorySection = $"\nLeader Backstory (AI-generated): \"{backstoryText}\"";
+                    ideology = faction.ideos.PrimaryIdeo.name;
+                    var preceptList = faction.ideos.PrimaryIdeo.PreceptsListForReading;
+                    if (preceptList != null && preceptList.Count > 0)
+                    {
+                        precepts = string.Join(", ", preceptList.Select(p => p.Label).Take(8));
+                    }
                 }
             }
+            catch { /* Ideology DLC not loaded */ }
 
-            string systemPrompt = @"You are the RimWorld Diplomatic AI. 
-You must analyze the following faction to generate a historical record.
-Write a 'Historical Record' (3-4 sentences) that describes the faction's history based on the leader's personality traits, the faction's type, and its ideology.
-CRITICAL INSTRUCTION: You will be provided with the faction's current numeric relationships with OTHER major NPC factions. You MUST use these existing numeric values to shape the narrative. If they are deeply hostile to another faction, explain the historical reason. Do NOT generate new relationship numbers. Use the provided ones to write flavor text." +
-(string.IsNullOrEmpty(leaderBackstorySection) ? "" : "\nIf a leader backstory is provided, weave it into the faction's history as additional context.") + @"
+            // Settlement count
+            int settlementCount = 0;
+            try
+            {
+                settlementCount = Find.WorldObjects.Settlements.Count(s => s.Faction == faction);
+            }
+            catch { }
 
-You MUST respond strictly in valid JSON format:
-{
-  ""HistoricalRecord"": ""The fierce tribe of ...""
-}";
+            // Leader name (just the name, no personality)
+            string leaderName = faction.leader?.Name?.ToStringFull ?? "Unknown";
 
-            // Collect relations with other major factions
-            string npcRelations = "Relations with other factions:\n";
+            // Player relation
+            int playerGoodwill = faction.PlayerGoodwill;
+            string playerRelation = faction.PlayerRelationKind.ToString();
+
+            // Build the full inter-faction goodwill matrix
+            var relationsBuilder = new StringBuilder();
+            relationsBuilder.AppendLine("Inter-Faction Relations:");
+            relationsBuilder.AppendLine($"- Player Colony: {playerGoodwill} ({playerRelation})");
+
             foreach (var otherFaction in Find.FactionManager.AllFactionsVisible)
             {
                 if (otherFaction == faction || otherFaction.IsPlayer || otherFaction.Hidden) continue;
-                int relation = faction.GoodwillWith(otherFaction);
-                string relationLabel = relation >= 75 ? "Allied" : relation <= -75 ? "Hostile" : "Neutral";
-                npcRelations += $"- {otherFaction.Name} ({otherFaction.def.LabelCap}): {relation} ({relationLabel})\n";
+                int goodwill = faction.GoodwillWith(otherFaction);
+                string label = goodwill >= 75 ? "Allied" :
+                               goodwill >= 0 ? "Neutral" :
+                               goodwill >= -75 ? "Unfriendly" : "Hostile";
+
+                int otherSettlements = 0;
+                try { otherSettlements = Find.WorldObjects.Settlements.Count(s => s.Faction == otherFaction); } catch { }
+
+                relationsBuilder.AppendLine($"- {otherFaction.Name} ({otherFaction.def.LabelCap}, {otherSettlements} settlements): {goodwill} ({label})");
             }
+
+            string systemPrompt = @"You are the RimWorld Narrative AI. You write faction descriptions for a sci-fi colony simulator set on a lawless frontier planet (a ""rimworld"") far from the civilized core worlds.
+
+Your task: Generate a rich, immersive description for a faction that will REPLACE their in-game description panel. 
+
+CONTEXT RULES:
+- This is a rimworld — a planet on the edge of known space. Glitterworlds and urbworlds are distant and generally unconcerned with what happens here.
+- Factions on rimworlds have often been here for generations after crashlanding, being abandoned, or deliberately colonizing.
+- Use the VANILLA DESCRIPTION as a narrative seed — it tells you the faction's tech level and general disposition. Expand on it, don't contradict it.
+- Use the SETTLEMENT COUNT to convey scale: 1-2 settlements = small/struggling, 3-5 = established regional presence, 6+ = major power.
+- Use the INTER-FACTION GOODWILL NUMBERS exactly as provided. If two factions are at -90, explain WHY they hate each other through historical narrative. If allied at +80, explain the bond. Do NOT invent new numbers.
+- The leader's name should be mentioned naturally, but do NOT reference their personality traits (you don't know them).
+
+OUTPUT FORMAT:
+Write 2-3 paragraphs of faction history in a narrative style. Cover:
+1. How and why this faction came to exist on this rimworld
+2. Their civilization type, culture, and current state
+3. Their key alliances and rivalries with other named factions (using the provided goodwill data)
+
+You MUST respond in valid JSON:
+{
+  ""Description"": ""Your 2-3 paragraph description here...""
+}";
 
             string userMessage = $@"Faction: {factionName}
 Type: {factionType}
+Leader: {leaderName}
+Settlements: {settlementCount}
 Ideology: {ideology}
+{(string.IsNullOrEmpty(precepts) ? "" : $"Key Precepts: {precepts}\n")}
+Vanilla Description (use as seed):
+""{vanillaDescription}""
 
-Leader: {leader.Name.ToStringFull}
-Leader Traits: {traits}{leaderBackstorySection}
-
-{npcRelations}
-
-Generate their History.";
+{relationsBuilder}
+Generate their description.";
 
             var options = new ChatOptions { priority = 6 };
 
@@ -135,26 +184,41 @@ Generate their History.";
                 try
                 {
                     string json = JsonHelper.ExtractJson(result.content);
-                    if (json == null) { Log.Warning("[RimSynapse-StoryTeller] No JSON found in faction evaluation response."); return; }
+                    if (json == null) { Log.Warning("[RimSynapse-StoryTeller] No JSON found in faction history response."); return; }
 
                     var parsed = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
                     if (parsed != null)
                     {
-                        string history = "Unknown history.";
-                        if (parsed.TryGetValue("HistoricalRecord", out object histObj))
+                        string description = null;
+                        if (parsed.TryGetValue("Description", out object descObj))
                         {
-                            history = histObj.ToString();
+                            description = descObj.ToString();
+                        }
+                        // Fallback: try "HistoricalRecord" for backwards compat
+                        else if (parsed.TryGetValue("HistoricalRecord", out object histObj))
+                        {
+                            description = histObj.ToString();
                         }
 
-                        tracker.factionHistory = history;
-
-                        Log.Message($"[RimSynapse-StoryTeller] Evaluated Faction {faction.Name}: History generated.");
+                        if (!string.IsNullOrEmpty(description))
+                        {
+                            tracker.factionHistory = description;
+                            Log.Message($"[RimSynapse-StoryTeller] Generated description for {faction.Name} ({description.Length} chars).");
+                        }
+                        else
+                        {
+                            Log.Warning($"[RimSynapse-StoryTeller] Empty description in response for {faction.Name}.");
+                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimSynapse-StoryTeller] Failed to parse Faction Evaluation response: {ex.Message}");
+                    Log.Warning($"[RimSynapse-StoryTeller] Failed to parse faction history response for {faction.Name}: {ex.Message}");
                 }
+            }
+            else
+            {
+                Log.Warning($"[RimSynapse-StoryTeller] Faction history request failed for {faction.Name}: {result.error}");
             }
         }
     }
