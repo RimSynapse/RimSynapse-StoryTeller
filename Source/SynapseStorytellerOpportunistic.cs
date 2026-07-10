@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -70,7 +70,7 @@ Analyze the situation and decide on your action.";
                         try
                         {
                             string json = JsonHelper.ExtractJson(result.content);
-                            if (json == null) { Log.Warning("[RimSynapse-StoryTeller] No JSON found in investigation response."); return; }
+                            if (json == null) { RimSynapse.SynapseLog.Warn("storyteller", "[RimSynapse-StoryTeller] No JSON found in investigation response."); return; }
 
                             var parsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
                             if (parsed != null && parsed.TryGetValue("ActionType", out string actionType))
@@ -82,27 +82,27 @@ Analyze the situation and decide on your action.";
                                     {
                                         IncidentParms parms = StorytellerUtility.DefaultParmsNow(def.category, map);
                                         Find.Storyteller.incidentQueue.Add(def, Find.TickManager.TicksGame + 2500, parms); // Trigger in 1 hour
-                                        Log.Message($"[RimSynapse-StoryTeller] Investigation chose to trigger incident: {defName}");
+                                        RimSynapse.SynapseLog.Info("storyteller", $"[RimSynapse-StoryTeller] Investigation chose to trigger incident: {defName}");
                                     }
                                     else
                                     {
-                                        Log.Warning($"[RimSynapse-StoryTeller] AI suggested invalid IncidentDefName: {defName}");
+                                        RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] AI suggested invalid IncidentDefName: {defName}");
                                     }
                                 }
                                 else if (actionType == "FlavorLetter" && parsed.TryGetValue("FlavorTitle", out string title) && parsed.TryGetValue("FlavorText", out string text))
                                 {
                                     Find.LetterStack.ReceiveLetter(title, text, LetterDefOf.NeutralEvent);
-                                    Log.Message("[RimSynapse-StoryTeller] Investigation generated a world flavor letter.");
+                                    RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Investigation generated a world flavor letter.");
                                 }
                                 else
                                 {
-                                    Log.Message("[RimSynapse-StoryTeller] Investigation concluded no action needed.");
+                                    RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Investigation concluded no action needed.");
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            Log.Warning($"[RimSynapse-StoryTeller] Failed to parse investigation response: {ex.Message}");
+                            RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Failed to parse investigation response: {ex.Message}");
                         }
                     }
                 },
@@ -113,3 +113,4 @@ Analyze the situation and decide on your action.";
         }
     }
 }
+

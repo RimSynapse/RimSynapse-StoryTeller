@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -40,7 +40,7 @@ namespace RimSynapse.StoryTeller
                 tracker.factionHistory = null; // Clear so it regenerates
             }
 
-            Log.Message("[RimSynapse-StoryTeller] Cleared all faction histories. They will regenerate on next opportunistic tick.");
+            RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Cleared all faction histories. They will regenerate on next opportunistic tick.");
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace RimSynapse.StoryTeller
 
             if (!string.IsNullOrEmpty(tracker.factionHistory))
             {
-                // Already generated history — skip
+                // Already generated history â€” skip
                 return false;
             }
 
@@ -127,9 +127,9 @@ namespace RimSynapse.StoryTeller
 Your task: Generate a rich, immersive description for a faction that will REPLACE their in-game description panel. 
 
 CONTEXT RULES:
-- This is a rimworld — a planet on the edge of known space. Glitterworlds and urbworlds are distant and generally unconcerned with what happens here.
+- This is a rimworld â€” a planet on the edge of known space. Glitterworlds and urbworlds are distant and generally unconcerned with what happens here.
 - Factions on rimworlds have often been here for generations after crashlanding, being abandoned, or deliberately colonizing.
-- Use the VANILLA DESCRIPTION as a narrative seed — it tells you the faction's tech level and general disposition. Expand on it, don't contradict it.
+- Use the VANILLA DESCRIPTION as a narrative seed â€” it tells you the faction's tech level and general disposition. Expand on it, don't contradict it.
 - Use the SETTLEMENT COUNT to convey scale: 1-2 settlements = small/struggling, 3-5 = established regional presence, 6+ = major power.
 - Use the INTER-FACTION GOODWILL NUMBERS exactly as provided. If two factions are at -90, explain WHY they hate each other through historical narrative. If allied at +80, explain the bond. Do NOT invent new numbers.
 - The leader's name should be mentioned naturally, but do NOT reference their personality traits (you don't know them).
@@ -178,7 +178,7 @@ Generate their description.";
                 try
                 {
                     string json = JsonHelper.ExtractJson(result.content);
-                    if (json == null) { Log.Warning("[RimSynapse-StoryTeller] No JSON found in faction history response."); return; }
+                    if (json == null) { RimSynapse.SynapseLog.Warn("storyteller", "[RimSynapse-StoryTeller] No JSON found in faction history response."); return; }
 
                     var parsed = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
                     if (parsed != null)
@@ -197,23 +197,24 @@ Generate their description.";
                         if (!string.IsNullOrEmpty(description))
                         {
                             tracker.factionHistory = description;
-                            Log.Message($"[RimSynapse-StoryTeller] Generated description for {faction.Name} ({description.Length} chars).");
+                            RimSynapse.SynapseLog.Info("storyteller", $"[RimSynapse-StoryTeller] Generated description for {faction.Name} ({description.Length} chars).");
                         }
                         else
                         {
-                            Log.Warning($"[RimSynapse-StoryTeller] Empty description in response for {faction.Name}.");
+                            RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Empty description in response for {faction.Name}.");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"[RimSynapse-StoryTeller] Failed to parse faction history response for {faction.Name}: {ex.Message}");
+                    RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Failed to parse faction history response for {faction.Name}: {ex.Message}");
                 }
             }
             else
             {
-                Log.Warning($"[RimSynapse-StoryTeller] Faction history request failed for {faction.Name}: {result.error}");
+                RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Faction history request failed for {faction.Name}: {result.error}");
             }
         }
     }
 }
+
