@@ -157,7 +157,7 @@ Vanilla Description (use as seed):
 {relationsBuilder}
 Generate their description.";
 
-            var options = new ChatOptions { priority = 6 };
+            var options = new ChatOptions { priority = 3 };
 
             SynapseClient.PromptAsync(
                 RimSynapseStoryTellerMod.ModHandle,

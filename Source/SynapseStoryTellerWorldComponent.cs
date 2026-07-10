@@ -44,14 +44,7 @@ namespace RimSynapse.StoryTeller
             }
         }
 
-        public override void FinalizeInit()
-        {
-            base.FinalizeInit();
-            
-            // Fire-and-forget: Queue generation for any factions that don't have backstories yet.
-            // The RequestQueue will pace them automatically.
-            RimSynapse.StoryTeller.SynapseFactionEvaluator.CheckAllFactions();
-        }
+
 
         // ── Faction Story Tracker Accessors ──
 
