@@ -44,6 +44,15 @@ namespace RimSynapse.StoryTeller
             }
         }
 
+        public override void FinalizeInit()
+        {
+            base.FinalizeInit();
+            
+            // Fire-and-forget: Queue generation for any factions that don't have backstories yet.
+            // The RequestQueue will pace them automatically.
+            RimSynapse.StoryTeller.SynapseFactionEvaluator.CheckAllFactions();
+        }
+
         // ── Faction Story Tracker Accessors ──
 
         public FactionStoryTracker GetOrCreateStoryTracker(string factionId)
@@ -132,6 +141,12 @@ namespace RimSynapse.StoryTeller
         public override void WorldComponentTick()
         {
             base.WorldComponentTick();
+
+            // Hard-link storytelling AI mechanic to game ticks (12 hours = 30,000 ticks)
+            if (Find.TickManager.TicksGame % 30000 == 0)
+            {
+                RimSynapse.StoryTeller.SynapseStorytellerOpportunistic.TriggerPeriodicInvestigation();
+            }
 
             if (Find.TickManager.TicksGame % 1000 == 0 && inTransitKnowledge.Count > 0)
             {

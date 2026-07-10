@@ -13,19 +13,13 @@ namespace RimSynapse.StoryTeller
 {
     public static class SynapseFactionEvaluator
     {
-        /// <summary>
-        /// Checks all factions for one that needs history generation.
-        /// Returns true if an LLM call was actually queued.
-        /// </summary>
-        public static bool CheckAllFactions()
+        public static void CheckAllFactions()
         {
-            if (Find.FactionManager == null) return false;
+            if (Find.FactionManager == null) return;
             foreach (var faction in Find.FactionManager.AllFactions)
             {
-                if (EvaluateFaction(faction))
-                    return true; // Queued one — let it finish before doing more
+                EvaluateFaction(faction);
             }
-            return false; // No work was queued
         }
 
         /// <summary>

@@ -26,29 +26,6 @@ namespace RimSynapse
             var harmony = new Harmony(Id);
             harmony.PatchAll();
 
-            // Register opportunistic background tasks with scheduling metadata
-            SynapseClient.RegisterOpportunisticTask(ModHandle, "StoryTeller_PeriodicInvestigation",
-                (System.Func<bool>)RimSynapse.StoryTeller.SynapseStorytellerOpportunistic.TriggerPeriodicInvestigation,
-                new RimSynapse.Internal.OpportunisticTaskConfig
-                {
-                    Label = "12-Hour Storyteller Investigation",
-                    Description = "The Aura Algorithm AI evaluates the colony and recent events to decide if an incident should trigger or a world flavor letter should be generated.",
-                    Priority = 9, // Highest priority background task, as it impacts gameplay
-                    Weight = 3.0f,
-                    CooldownTicks = 30000 // 30,000 ticks = 12 in-game hours
-                });
-
-            SynapseClient.RegisterOpportunisticTask(ModHandle, "StoryTeller_FactionEvaluation",
-                (System.Func<bool>)RimSynapse.StoryTeller.SynapseFactionEvaluator.CheckAllFactions,
-                new RimSynapse.Internal.OpportunisticTaskConfig
-                {
-                    Label = "Faction AI Generation",
-                    Description = "The Aura Algorithm AI interprets faction data and leader backstories to generate historical flavor.",
-                    Priority = 6, // Above leader backstories — faction history provides context for leaders
-                    Weight = 1.0f,
-                    CooldownTicks = 10000 
-                });
-
             Log.Message("[RimSynapse-StoryTeller] Initialization complete.");
         }
 

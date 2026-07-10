@@ -15,9 +15,6 @@ namespace RimSynapse.StoryTeller
             if (Current.ProgramState != ProgramState.Playing || Find.CurrentMap == null) return false;
             if (Find.Storyteller?.def?.defName != "Synapse") return false;
 
-            // Ensure all faction leaders have backstories and baselines
-            SynapseFactionEvaluator.CheckAllFactions();
-
             var map = Find.CurrentMap;
             
             // Generate snapshot of current state
