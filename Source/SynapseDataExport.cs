@@ -1,4 +1,4 @@
-using Verse;
+﻿using Verse;
 
 namespace RimSynapse
 {
@@ -11,7 +11,7 @@ namespace RimSynapse
         /// <param name="outputPath">The file path to export the XML to.</param>
         public static void ExportToFile(string outputPath)
         {
-            Log.Message($"[RimSynapse-StoryTeller] Stub: Exporting Synapse narrative data to {outputPath}");
+            RimSynapse.SynapseLog.Info("storyteller", $"[RimSynapse-StoryTeller] Stub: Exporting Synapse narrative data to {outputPath}");
             
             // Future implementation:
             // - Collects data from SynapsePawnComp (Psychology)
@@ -21,3 +21,4 @@ namespace RimSynapse
         }
     }
 }
+

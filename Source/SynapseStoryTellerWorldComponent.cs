@@ -44,6 +44,8 @@ namespace RimSynapse.StoryTeller
             }
         }
 
+
+
         // ── Faction Story Tracker Accessors ──
 
         public FactionStoryTracker GetOrCreateStoryTracker(string factionId)
@@ -132,6 +134,12 @@ namespace RimSynapse.StoryTeller
         public override void WorldComponentTick()
         {
             base.WorldComponentTick();
+
+            // Hard-link storytelling AI mechanic to game ticks (12 hours = 30,000 ticks)
+            if (Find.TickManager.TicksGame % 30000 == 0)
+            {
+                RimSynapse.StoryTeller.SynapseStorytellerOpportunistic.TriggerPeriodicInvestigation();
+            }
 
             if (Find.TickManager.TicksGame % 1000 == 0 && inTransitKnowledge.Count > 0)
             {

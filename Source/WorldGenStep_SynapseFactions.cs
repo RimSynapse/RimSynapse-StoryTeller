@@ -1,4 +1,4 @@
-using RimWorld;
+﻿using RimWorld;
 using RimWorld.Planet;
 using Verse;
 
@@ -10,7 +10,7 @@ namespace RimSynapse.StoryTeller
 
         public override void GenerateFresh(string seed, PlanetLayer layer)
         {
-            Log.Message("[RimSynapse-StoryTeller] Applying organic modifiers to Faction Natural Goodwill...");
+            RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Applying organic modifiers to Faction Natural Goodwill...");
             
             if (Find.FactionManager == null) return;
             var stWorldComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
@@ -36,3 +36,4 @@ namespace RimSynapse.StoryTeller
         }
     }
 }
+

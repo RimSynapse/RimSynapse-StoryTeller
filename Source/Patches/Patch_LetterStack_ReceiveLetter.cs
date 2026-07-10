@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -97,7 +97,7 @@ Rewrite this threat notification to include your personality.";
                         }
                         catch (Exception ex)
                         {
-                            Log.Warning($"[RimSynapse-StoryTeller] Failed to parse letter rewrite JSON: {ex.Message}");
+                            RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Failed to parse letter rewrite JSON: {ex.Message}");
                             choiceLetter.Label = originalName;
                             choiceLetter.Text = originalDesc;
                         }
@@ -117,3 +117,4 @@ Rewrite this threat notification to include your personality.";
         }
     }
 }
+

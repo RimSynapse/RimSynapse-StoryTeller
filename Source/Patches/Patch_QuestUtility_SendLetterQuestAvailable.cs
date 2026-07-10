@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using HarmonyLib;
 using RimWorld;
 using Verse;
@@ -82,7 +82,7 @@ Rewrite this quest to fit the narrative.";
                         }
                         catch (Exception ex)
                         {
-                            Log.Warning($"[RimSynapse-StoryTeller] Failed to parse quest rewrite JSON: {ex.Message}");
+                            RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Failed to parse quest rewrite JSON: {ex.Message}");
                             quest.name = originalName;
                             quest.description = originalDesc;
                         }
@@ -101,3 +101,4 @@ Rewrite this quest to fit the narrative.";
         }
     }
 }
+

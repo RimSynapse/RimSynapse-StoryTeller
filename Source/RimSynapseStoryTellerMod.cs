@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using HarmonyLib;
 using Verse;
@@ -18,7 +18,7 @@ namespace RimSynapse
 
         public RimSynapseStoryTellerMod(ModContentPack content) : base(content)
         {
-            Log.Message("[RimSynapse-StoryTeller] Initializing narrative intelligence layer.");
+            RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Initializing narrative intelligence layer.");
             
             ModHandle = SynapseCore.Register("RimSynapseStoryTeller", "RimSynapse StoryTeller");
 
@@ -26,30 +26,7 @@ namespace RimSynapse
             var harmony = new Harmony(Id);
             harmony.PatchAll();
 
-            // Register opportunistic background tasks with scheduling metadata
-            SynapseClient.RegisterOpportunisticTask(ModHandle, "StoryTeller_PeriodicInvestigation",
-                (System.Func<bool>)RimSynapse.StoryTeller.SynapseStorytellerOpportunistic.TriggerPeriodicInvestigation,
-                new RimSynapse.Internal.OpportunisticTaskConfig
-                {
-                    Label = "12-Hour Storyteller Investigation",
-                    Description = "The Aura Algorithm AI evaluates the colony and recent events to decide if an incident should trigger or a world flavor letter should be generated.",
-                    Priority = 9, // Highest priority background task, as it impacts gameplay
-                    Weight = 3.0f,
-                    CooldownTicks = 30000 // 30,000 ticks = 12 in-game hours
-                });
-
-            SynapseClient.RegisterOpportunisticTask(ModHandle, "StoryTeller_FactionEvaluation",
-                (System.Func<bool>)RimSynapse.StoryTeller.SynapseFactionEvaluator.CheckAllFactions,
-                new RimSynapse.Internal.OpportunisticTaskConfig
-                {
-                    Label = "Faction AI Generation",
-                    Description = "The Aura Algorithm AI interprets faction data and leader backstories to generate historical flavor.",
-                    Priority = 6, // Above leader backstories — faction history provides context for leaders
-                    Weight = 1.0f,
-                    CooldownTicks = 10000 
-                });
-
-            Log.Message("[RimSynapse-StoryTeller] Initialization complete.");
+            RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Initialization complete.");
         }
 
         public override string SettingsCategory()
@@ -78,8 +55,8 @@ namespace RimSynapse
 
             var stWorldComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
 
-            // ── Pacing Overview ──
-            listing.Label("── Pacing ──");
+            // â”€â”€ Pacing Overview â”€â”€
+            listing.Label("â”€â”€ Pacing â”€â”€");
             listing.Gap(4f);
             if (stWorldComp != null)
             {
@@ -93,7 +70,7 @@ namespace RimSynapse
             }
 
             listing.GapLine();
-            listing.Label("── Faction Backstories ──");
+            listing.Label("â”€â”€ Faction Backstories â”€â”€");
             listing.Gap(4f);
 
             if (listing.ButtonText("Regenerate All Faction Backstories"))
@@ -103,7 +80,7 @@ namespace RimSynapse
             }
             listing.Gap(4f);
 
-            listing.Label("── Faction Status ──");
+            listing.Label("â”€â”€ Faction Status â”€â”€");
             listing.Gap(4f);
 
             if (Find.FactionManager != null)
@@ -123,11 +100,11 @@ namespace RimSynapse
                     int backstoryCount = coreComp?.memories.Count(m => m.memoryType == "Backstory") ?? 0;
 
                     string backstoryStatus = hasBackstory
-                        ? $"✓ {backstoryCount} memories"
-                        : "✗ Pending";
+                        ? $"âœ“ {backstoryCount} memories"
+                        : "âœ— Pending";
 
                     // Check faction history status
-                    string historyStatus = "✗ Pending";
+                    string historyStatus = "âœ— Pending";
                     string customGoodwillInfo = "";
                     if (stWorldComp != null)
                     {
@@ -135,8 +112,8 @@ namespace RimSynapse
                         if (tracker != null)
                         {
                             historyStatus = !string.IsNullOrEmpty(tracker.factionHistory)
-                                ? $"✓ Generated ({tracker.factionHistory.Length} chars)"
-                                : "✗ Pending";
+                                ? $"âœ“ Generated ({tracker.factionHistory.Length} chars)"
+                                : "âœ— Pending";
 
                             if (tracker.customNaturalGoodwill.HasValue)
                             {
@@ -145,7 +122,7 @@ namespace RimSynapse
                         }
                     }
 
-                    listing.Label($"■ {faction.Name} ({faction.def.LabelCap})");
+                    listing.Label($"â–  {faction.Name} ({faction.def.LabelCap})");
                     listing.Label($"  Leader: {leaderName} | Goodwill: {goodwill} (Natural: {naturalGoodwill}){customGoodwillInfo}");
                     listing.Label($"  Leader Backstory: {backstoryStatus} | Faction History: {historyStatus}");
 
@@ -165,7 +142,7 @@ namespace RimSynapse
                         foreach (var memory in coreComp.memories.Where(m => m.memoryType == "Backstory"))
                         {
                             string tags = memory.tags != null ? string.Join(", ", memory.tags) : "";
-                            listing.Label($"    • [{tags}] {memory.summary}");
+                            listing.Label($"    â€¢ [{tags}] {memory.summary}");
                         }
                     }
 
@@ -178,3 +155,4 @@ namespace RimSynapse
         }
     }
 }
+
