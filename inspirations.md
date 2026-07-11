@@ -36,3 +36,30 @@ So yes, absolutely.  I thought we started doing this with the 12 hour news artic
 **RimSynapse Feature:** <missing>
 **AI Suggestion:** Quests are no longer one-and-done, but multi-stage evolving narratives linked by the LLM.
 **User Input:** Yes absolutely I want them keep evolving and feeding into each other.
+
+## Expansion Inspirations
+
+### Feature 7: Arrogant Decrees & Monumental Egos (Royalty)
+**Source Credit:** Royalty DLC / Vanilla Factions Expanded - Empire
+**RimSynapse Feature:** <missing>
+**AI Suggestion:** Noble decrees rewritten with extreme arrogance. Quests to build monuments are described not just as tasks, but as essential cosmic rights for the noble's legacy.
+
+### Feature 8: Holy Crusades & Divine Visions (Ideology)
+**Source Credit:** Ideology DLC
+**RimSynapse Feature:** <missing>
+**AI Suggestion:** Relic quests described as holy crusades or prophecies. Ritual opportunities are presented as visions, divine inspiration, or dark omens directly into the colonists' minds.
+
+### Feature 9: Mechanitor Broadcasts & Planetary Decay (Biotech)
+**Source Credit:** Biotech DLC
+**RimSynapse Feature:** <missing>
+**AI Suggestion:** Mechanitor quests feel like cold, calculated broadcasts from ancient satellites. Pollution events are described poetically as planetary decay or the coughing of the earth.
+
+### Feature 10: Whispers in the Mind (Anomaly)
+**Source Credit:** Anomaly DLC
+**RimSynapse Feature:** <missing>
+**AI Suggestion:** Creepy, unsettling descriptions of void events. Instead of a standard letter, an anomaly event is described as "a whisper in your mind" or "a shadow stretching too far."
+
+### Feature 11: Distress Signals from the Void (Odyssey)
+**Source Credit:** Save Our Ship 2
+**RimSynapse Feature:** <missing>
+**AI Suggestion:** Journey events, distress signals from derelict space stations, and ancient archotech signals forming breadcrumbs for an endgame space narrative.

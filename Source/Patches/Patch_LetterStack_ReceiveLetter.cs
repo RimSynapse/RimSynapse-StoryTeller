@@ -66,7 +66,8 @@ You MUST respond strictly in valid JSON:
             if (asker != null)
             {
                 string factionName = asker.Faction?.Name ?? "an unknown faction";
-                string title = asker.royalty?.MostSeniorTitle?.def?.LabelCap ?? "representative";
+                string royaltyTitle = RimSynapse.Expansions.Royalty.StoryTellerRoyaltyIntegration.GetAskerTitle(asker);
+                string title = royaltyTitle ?? "representative";
                 
                 systemPrompt = $@"You are {asker.Name.ToStringShort}, a {title} of {factionName}.
 You are formally contacting a RimWorld colony to offer them a quest or opportunity. 
