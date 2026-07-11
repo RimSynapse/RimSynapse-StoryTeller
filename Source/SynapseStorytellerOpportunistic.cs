@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Verse;
@@ -10,43 +10,27 @@ namespace RimSynapse.StoryTeller
 {
     public static class SynapseStorytellerOpportunistic
     {
-        public static bool TriggerPeriodicInvestigation()
+        public static bool TriggerPacingAdjustment()
         {
             if (Current.ProgramState != ProgramState.Playing || Find.CurrentMap == null) return false;
             if (Find.Storyteller?.def?.defName != "Synapse") return false;
 
             var map = Find.CurrentMap;
             
-            // Generate snapshot of current state
             string wealth = map.wealthWatcher.WealthTotal.ToString("F0");
             string pop = map.mapPawns.FreeColonistsCount.ToString();
             string mood = map.mapPawns.FreeColonists.Average(p => p.needs?.mood?.CurLevelPercentage ?? 0.5f).ToString("P0");
             
-            // Get recent events from Core if possible (optional context)
-            string recentEvents = "None recently.";
-            var coreWorldComp = Find.World.GetComponent<RimSynapse.SynapseCoreWorldComponent>();
-            if (coreWorldComp != null)
-            {
-                var events = coreWorldComp.GetRecentEvents(5);
-                if (events.Any())
-                {
-                    recentEvents = string.Join("\n", events.Select(e => $"- {e.eventDescription}"));
-                }
-            }
-
-            string systemPrompt = @"You are Aura Algorithm, the AI Storyteller for RimWorld.
-You are running your 12-hour periodic investigation of the colony to decide if you should intervene.
-Based on their recent narrative and current struggles, you must choose ONE action:
-1. Trigger a specific game incident (e.g., 'TraderCaravanArrival', 'Eclipse', 'RaidEnemy', 'VisitorGroup', 'Quest_TradeRequest').
-2. Send a 'FlavorLetter' - a funny or interesting world event report of things happening elsewhere on the rimworld, just to add flavor if they are struggling or nothing major is happening.
-3. 'None' - Do nothing.
+            string systemPrompt = @"You are the Synapse Storyteller Pacing Adjuster.
+You run every 6 hours. Based on the colony's raw status, you must decide if the game should speed up event generation (harass the player more) or slow it down.
+Return a 'PacingMultiplier' (float).
+- 1.0 is standard vanilla pacing.
+- > 1.0 means MORE frequent events (e.g., 1.5 = 50% more frequent).
+- < 1.0 means LESS frequent events (e.g., 0.5 = half as frequent).
 
 You MUST respond strictly in valid JSON format:
 {
-  ""ActionType"": ""Incident | FlavorLetter | None"",
-  ""IncidentDefName"": ""(Leave empty if not Incident)"",
-  ""FlavorTitle"": ""(Title of the flavor letter, leave empty if not FlavorLetter)"",
-  ""FlavorText"": ""(Text of the flavor letter, leave empty if not FlavorLetter)""
+  ""PacingMultiplier"": 1.0
 }";
 
             string userMessage = $@"Colony Status:
@@ -54,10 +38,7 @@ You MUST respond strictly in valid JSON format:
 - Population: {pop}
 - Average Mood: {mood}
 
-Recent Events:
-{recentEvents}
-
-Analyze the situation and decide on your action.";
+Analyze the situation and provide the PacingMultiplier.";
 
             SynapseClient.PromptAsync(
                 RimSynapseStoryTellerMod.ModHandle,
@@ -70,46 +51,115 @@ Analyze the situation and decide on your action.";
                         try
                         {
                             string json = JsonHelper.ExtractJson(result.content);
-                            if (json == null) { RimSynapse.SynapseLog.Warn("storyteller", "[RimSynapse-StoryTeller] No JSON found in investigation response."); return; }
+                            if (json == null) return;
 
-                            var parsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
-                            if (parsed != null && parsed.TryGetValue("ActionType", out string actionType))
+                            var parsed = JsonConvert.DeserializeObject<Dictionary<string, float>>(json);
+                            if (parsed != null && parsed.TryGetValue("PacingMultiplier", out float mult))
                             {
-                                if (actionType == "Incident" && parsed.TryGetValue("IncidentDefName", out string defName) && !string.IsNullOrEmpty(defName))
+                                var stComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
+                                if (stComp != null)
                                 {
-                                    IncidentDef def = DefDatabase<IncidentDef>.GetNamedSilentFail(defName);
-                                    if (def != null)
-                                    {
-                                        IncidentParms parms = StorytellerUtility.DefaultParmsNow(def.category, map);
-                                        Find.Storyteller.incidentQueue.Add(def, Find.TickManager.TicksGame + 2500, parms); // Trigger in 1 hour
-                                        RimSynapse.SynapseLog.Info("storyteller", $"[RimSynapse-StoryTeller] Investigation chose to trigger incident: {defName}");
-                                    }
-                                    else
-                                    {
-                                        RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] AI suggested invalid IncidentDefName: {defName}");
-                                    }
-                                }
-                                else if (actionType == "FlavorLetter" && parsed.TryGetValue("FlavorTitle", out string title) && parsed.TryGetValue("FlavorText", out string text))
-                                {
-                                    Find.LetterStack.ReceiveLetter(title, text, LetterDefOf.NeutralEvent);
-                                    RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Investigation generated a world flavor letter.");
-                                }
-                                else
-                                {
-                                    RimSynapse.SynapseLog.Info("storyteller", "[RimSynapse-StoryTeller] Investigation concluded no action needed.");
+                                    stComp.GlobalPacingMultiplier = UnityEngine.Mathf.Clamp(mult, 0.1f, 5.0f);
+                                    RimSynapse.SynapseLog.Info("storyteller", $"[RimSynapse-StoryTeller] Pacing adjusted to {stComp.GlobalPacingMultiplier}");
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
-                            RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Failed to parse investigation response: {ex.Message}");
+                            RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Failed to parse pacing response: {ex.Message}");
                         }
                     }
                 },
-                new ChatOptions { priority = 1 } // Moderate priority
+                new ChatOptions { priority = 1 }
             );
 
             return true;
+        }
+
+        public static void TriggerEventSelection(IncidentCategoryDef category, IIncidentTarget target)
+        {
+            if (Current.ProgramState != ProgramState.Playing || Find.CurrentMap == null) return;
+
+            var map = Find.CurrentMap;
+            string wealth = map.wealthWatcher.WealthTotal.ToString("F0");
+            string pop = map.mapPawns.FreeColonistsCount.ToString();
+            string mood = map.mapPawns.FreeColonists.Average(p => p.needs?.mood?.CurLevelPercentage ?? 0.5f).ToString("P0");
+            
+            var coreWorldComp = Find.World.GetComponent<RimSynapse.SynapseCoreWorldComponent>();
+            string recentEvents = "None recently.";
+            if (coreWorldComp != null)
+            {
+                var events = coreWorldComp.GetRecentEvents(5);
+                if (events.Any())
+                {
+                    recentEvents = string.Join("\n", events.Select(e => $"- {e.eventDescription}"));
+                }
+            }
+
+            string systemPrompt = $@"You are the Synapse Storyteller Event Selector.
+An event trigger has occurred for category: {category.defName}.
+You must pick the EXACT IncidentDefName from vanilla RimWorld that fits the current narrative best.
+For example, if the category is ThreatBig, choose 'RaidEnemy', 'Infestation', 'ManhunterPack', etc.
+If the category is FactionArrival, choose 'TraderCaravanArrival', 'VisitorGroup', etc.
+
+You MUST respond strictly in valid JSON format:
+{{
+  ""IncidentDefName"": ""(The exact def name of the incident)""
+}}";
+
+            string userMessage = $@"Colony Status:
+- Wealth: {wealth}
+- Population: {pop}
+- Average Mood: {mood}
+
+Recent Events:
+{recentEvents}
+
+Provide the incident def name.";
+
+            SynapseClient.PromptAsync(
+                RimSynapseStoryTellerMod.ModHandle,
+                systemPrompt,
+                userMessage,
+                result =>
+                {
+                    // Restore pacing immediately upon return so the game isn't permanently paused for events
+                    var stComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
+                    if (stComp != null)
+                    {
+                        stComp.GlobalPacingMultiplier = stComp.BasePacingMultiplier;
+                    }
+
+                    if (result.success)
+                    {
+                        try
+                        {
+                            string json = JsonHelper.ExtractJson(result.content);
+                            if (json == null) return;
+
+                            var parsed = JsonConvert.DeserializeObject<Dictionary<string, string>>(json);
+                            if (parsed != null && parsed.TryGetValue("IncidentDefName", out string defName))
+                            {
+                                IncidentDef def = DefDatabase<IncidentDef>.GetNamedSilentFail(defName);
+                                if (def != null)
+                                {
+                                    IncidentParms parms = StorytellerUtility.DefaultParmsNow(def.category, target);
+                                    if (def.Worker.CanFireNow(parms))
+                                    {
+                                        Find.Storyteller.incidentQueue.Add(def, Find.TickManager.TicksGame, parms);
+                                        RimSynapse.SynapseLog.Info("storyteller", $"[RimSynapse-StoryTeller] Event Selection chose: {defName}");
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            RimSynapse.SynapseLog.Warn("storyteller", $"[RimSynapse-StoryTeller] Failed to parse event selection: {ex.Message}");
+                        }
+                    }
+                },
+                new ChatOptions { priority = 10 } // High priority for events
+            );
         }
     }
 }

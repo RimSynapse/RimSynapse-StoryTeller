@@ -12,6 +12,7 @@ namespace RimSynapse.StoryTeller
         public Dictionary<string, float> categoryMultipliers = new Dictionary<string, float>();
         public Dictionary<string, float> incidentMultipliers = new Dictionary<string, float>();
         public float GlobalPacingMultiplier = 1.0f;
+        public float BasePacingMultiplier = 1.0f;
         public float TensionModifier = 1.0f;
 
         // ── Faction Story Trackers (extended fields for StoryTeller) ──
@@ -24,6 +25,9 @@ namespace RimSynapse.StoryTeller
         {
         }
 
+        public int lastInvestigationHour = -1;
+        public int lastFlavorEventDay = -1;
+
         public override void ExposeData()
         {
             base.ExposeData();
@@ -31,6 +35,7 @@ namespace RimSynapse.StoryTeller
             Scribe_Collections.Look(ref categoryMultipliers, "categoryMultipliers", LookMode.Value, LookMode.Value);
             Scribe_Collections.Look(ref incidentMultipliers, "incidentMultipliers", LookMode.Value, LookMode.Value);
             Scribe_Values.Look(ref GlobalPacingMultiplier, "globalPacingMultiplier", 1.0f);
+            Scribe_Values.Look(ref BasePacingMultiplier, "basePacingMultiplier", 1.0f);
             Scribe_Values.Look(ref TensionModifier, "tensionModifier", 1.0f);
             Scribe_Collections.Look(ref factionStoryTrackers, "factionStoryTrackers", LookMode.Deep);
             Scribe_Collections.Look(ref inTransitKnowledge, "inTransitKnowledge", LookMode.Deep);
@@ -42,6 +47,9 @@ namespace RimSynapse.StoryTeller
                 if (factionStoryTrackers == null) factionStoryTrackers = new List<FactionStoryTracker>();
                 if (inTransitKnowledge == null) inTransitKnowledge = new List<KnowledgePacket>();
             }
+
+            Scribe_Values.Look(ref lastInvestigationHour, "lastInvestigationHour", -1);
+            Scribe_Values.Look(ref lastFlavorEventDay, "lastFlavorEventDay", -1);
         }
 
 
@@ -134,12 +142,6 @@ namespace RimSynapse.StoryTeller
         public override void WorldComponentTick()
         {
             base.WorldComponentTick();
-
-            // Hard-link storytelling AI mechanic to game ticks (12 hours = 30,000 ticks)
-            if (Find.TickManager.TicksGame % 30000 == 0)
-            {
-                RimSynapse.StoryTeller.SynapseStorytellerOpportunistic.TriggerPeriodicInvestigation();
-            }
 
             if (Find.TickManager.TicksGame % 1000 == 0 && inTransitKnowledge.Count > 0)
             {

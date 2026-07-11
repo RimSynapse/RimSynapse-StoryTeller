@@ -70,27 +70,5 @@ namespace RimSynapse.StoryTeller
             return weights.RandomElementByWeightWithFallback(kvp => kvp.Value, default).Key;
         }
 
-        /// <summary>
-        /// Within a chosen category, picks a specific incident weighted by
-        /// its base chance multiplied by LLM-driven incident multipliers.
-        /// </summary>
-        private IncidentDef ChooseIncidentByLLMWeights(IncidentCategoryDef category, IncidentParms parms, SynapseStoryTellerWorldComponent worldComp)
-        {
-            var validIncidents = DefDatabase<IncidentDef>.AllDefs
-                .Where(d => d.category == category && d.Worker.CanFireNow(parms))
-                .ToList();
-
-            if (validIncidents.Count == 0) return null;
-
-            return validIncidents.RandomElementByWeightWithFallback(d => 
-            {
-                float baseChance = d.Worker.BaseChanceThisGame;
-                if (worldComp != null)
-                {
-                    baseChance *= worldComp.GetIncidentMultiplier(d.defName);
-                }
-                return baseChance;
-            }, null);
-        }
     }
 }

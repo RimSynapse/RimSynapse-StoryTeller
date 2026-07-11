@@ -16,9 +16,22 @@ namespace RimSynapse.StoryTeller
 
         public override IEnumerable<FiringIncident> MakeIntervalIncidents(IIncidentTarget target)
         {
-            var coreComp = Find.World.GetComponent<SynapseCoreWorldComponent>();
+            var coreComp = Find.World.GetComponent<RimSynapse.SynapseCoreWorldComponent>();
             var stComp = Find.World.GetComponent<SynapseStoryTellerWorldComponent>();
             if (stComp == null || coreComp == null) yield break;
+
+            if (Find.CurrentMap != null)
+            {
+                int currentHour = GenLocalDate.HourOfDay(Find.CurrentMap);
+                int currentDay = GenLocalDate.DayOfYear(Find.CurrentMap);
+
+                // Check every 6 hours
+                if (currentHour % 6 == 0 && stComp.lastInvestigationHour != currentHour)
+                {
+                    stComp.lastInvestigationHour = currentHour;
+                    RimSynapse.StoryTeller.SynapseStorytellerOpportunistic.TriggerPacingAdjustment();
+                }
+            }
 
             float pacingMultiplier = stComp.GlobalPacingMultiplier;
             
@@ -58,14 +71,9 @@ namespace RimSynapse.StoryTeller
                     IncidentCategoryDef category = ChooseCategory(target, stComp);
                     if (category != null)
                     {
-                        IncidentParms parms = GenerateParms(category, target);
-                        
-                        IncidentDef incidentDef = ChooseIncidentByLLMWeights(category, parms, stComp);
-                        
-                        if (incidentDef != null && incidentDef.Worker.CanFireNow(parms))
-                        {
-                            yield return new FiringIncident(incidentDef, this, parms);
-                        }
+                        // Temporarily reduce pacing to prevent further events while LLM is thinking
+                        stComp.GlobalPacingMultiplier = 0.001f;
+                        RimSynapse.StoryTeller.SynapseStorytellerOpportunistic.TriggerEventSelection(category, target);
                     }
                 }
             }
