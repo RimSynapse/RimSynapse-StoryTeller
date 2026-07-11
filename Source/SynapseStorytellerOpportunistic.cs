@@ -70,7 +70,7 @@ Analyze the situation and provide the PacingMultiplier.";
                         }
                     }
                 },
-                new ChatOptions { priority = 1 }
+                new ChatOptions { priority = 1, requestName = "Storyteller Pacing", targetName = "Colony" }
             );
 
             return true;
@@ -158,7 +158,7 @@ Provide the incident def name.";
                         }
                     }
                 },
-                new ChatOptions { priority = 10 } // High priority for events
+                new ChatOptions { priority = 10, requestName = "Storyteller Event Selection", targetName = category.defName } // High priority for events
             );
         }
     }

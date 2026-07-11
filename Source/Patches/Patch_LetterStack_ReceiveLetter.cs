@@ -124,7 +124,7 @@ You MUST respond strictly in valid JSON:
                         __instance.ReceiveLetter(let, debugInfo, delayTicks, playSound);
                     });
                 },
-                new RimSynapse.ChatOptions { priority = 3 } // High priority for UI events
+                new RimSynapse.ChatOptions { priority = 3, requestName = "Rewrite Letter", targetName = originalTitle } // High priority for UI events
             );
 
             // Block the vanilla ReceiveLetter call right now, because we will inject it later

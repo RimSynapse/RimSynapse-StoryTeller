@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -157,7 +157,7 @@ Vanilla Description (use as seed):
 {relationsBuilder}
 Generate their description.";
 
-            var options = new ChatOptions { priority = 3 };
+            var options = new ChatOptions { priority = 3, requestName = "Faction Evaluation", targetName = factionName };
 
             SynapseClient.PromptAsync(
                 RimSynapseStoryTellerMod.ModHandle,
