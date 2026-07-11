@@ -9,6 +9,8 @@ namespace RimSynapse.StoryTeller.Patches
     {
         public static void Postfix(Faction __instance)
         {
+            if (Current.ProgramState != ProgramState.Playing) return;
+
             if (__instance != null && __instance.leader != null)
             {
                 // New leader generated, ensure we check and evaluate them

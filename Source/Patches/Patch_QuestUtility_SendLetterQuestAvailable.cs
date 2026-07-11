@@ -12,16 +12,12 @@ namespace RimSynapse.StoryTeller
     [HarmonyPatch(typeof(QuestUtility), "SendLetterQuestAvailable")]
     public static class Patch_QuestUtility_SendLetterQuestAvailable
     {
-        private static System.Collections.Generic.HashSet<Quest> _processedQuests = new System.Collections.Generic.HashSet<Quest>();
-
         public static bool Prefix(Quest quest)
         {
-            // Temporarily disable quest rewrites because it intercepts quests BEFORE 
-            // their grammar (e.g. [asker_nameFull]) is resolved, which breaks quests.
+            // OBSOLETE: Quest and threat letter rewrites are now handled by 
+            // Patch_LetterStack_ReceiveLetter to ensure grammar is fully resolved.
             return true;
         }
-
-
     }
 }
 
