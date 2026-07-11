@@ -4,8 +4,8 @@ using Verse;
 
 namespace RimSynapse.StoryTeller.Patches
 {
-    [HarmonyPatch(typeof(Faction), "GenerateNewLeader")]
-    public static class Patch_Faction_GenerateNewLeader
+    [HarmonyPatch(typeof(Faction), "TryGenerateNewLeader")]
+    public static class Patch_Faction_TryGenerateNewLeader
     {
         public static void Postfix(Faction __instance)
         {
