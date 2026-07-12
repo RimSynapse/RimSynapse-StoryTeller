@@ -28,15 +28,9 @@
 [h1]RimSynapse - StoryTeller[/h1]
 [b]📚 [url=https://github.com/RimSynapse/RimSynapse-StoryTeller/wiki]Official Wiki &amp; Documentation[/url][/b]
 
-[b]Companion Mod for RimSynapse.[/b]
-Intercepts standard storytelling events, raids, and quests to generate rich, contextual, multi-stage narratives via the LLM.
+[b]DEPRECATED - DO NOT USE[/b]
+This module has been officially deprecated. Its features (Aura Algorithm and Faction Lore) have been migrated directly into [b]RimSynapse - Core[/b] and [b]RimSynapse - Factions[/b].
 
-[h2]Compatibility Matrix[/h2]
-[list]
-[*] [b]Royalty DLC:[/b] Compatible &amp; Optional. Generates arrogant noble decrees and custom empire quests.
-[*] [b]Ideology DLC:[/b] Compatible &amp; Optional. Reframes quests as holy crusades and divine visions.
-[*] [b]Biotech DLC:[/b] Compatible &amp; Optional. Describes mechanitor threats as cold satellite broadcasts.
-[*] [b]Anomaly DLC:[/b] Compatible &amp; Optional. Translates events into chilling whispers and void phenomena.
-[/list]
+Please unsubscribe from this mod and use the updated Core and Factions modules instead.
     </description>
 </ModMetaData>
